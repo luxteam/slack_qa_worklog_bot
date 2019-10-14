@@ -44,7 +44,9 @@ def createReport():
 
 	# generate slack report message
 	for person in persons:
+		print(jira_report[person])
 		jira_report[person] = sorted(jira_report[person].items(), key=operator.itemgetter(0))
+		print(jira_report[person])
 		slack_report.append(createPersonJson(person, jira_report[person]))
 
 	# create slack message
@@ -55,23 +57,24 @@ def createReport():
 	return report
 
 
-def createPersonJson(person, data):
+def createPersonJson(person, person_report):
 	report = {}
 	report["title"] = person
 	tickets = []
 	total_time = 0
-	if data:
-		for d in data:
-			if d[1]['parent_key'] and d[1]['comment']:
-				message = "Parent task: [{}] {}\nTime: {}\nLogged time: {}\nComment: {}".format(d[1]['parent_key'], d[1]['parent_summary'], d[0], d[1]['timeSpent'], d[1]['comment'])
-			elif d[1]['parent_key']:
-				message = "Parent task: [{}] {}\nTime: {}\nLogged time: {}".format(d[1]['parent_key'], d[1]['parent_summary'], d[0], d[1]['timeSpent'])
-			elif d[1]['comment']:
-				message = "Time: {}\nLogged time: {}\nComment: {}".format(d[0], d[1]['timeSpent'], d[1]['comment'])
-			else:
-				message = "Time: {}\nLogged time: {}".format(d[0], d[1]['timeSpent'])
-			tickets.append({"title": "[{}] {}".format(d[1]['key'], d[1]['summary']) , "value": message, "short": False})
-			total_time += d[1]['timeSpentSeconds']
+	if person_report:
+		for time in person_report:
+			for time_dict in time[1]:
+				if time_dict['parent_key'] and time_dict['comment']:
+					message = "Parent task: [{}] {}\nTime: {}\nLogged time: {}\nComment: {}".format(time_dict['parent_key'], time_dict['parent_summary'], time[0], time_dict['timeSpent'], time_dict['comment'])
+				elif time_dict['parent_key']:
+					message = "Parent task: [{}] {}\nTime: {}\nLogged time: {}".format(time_dict['parent_key'], time_dict['parent_summary'], time[0], time_dict['timeSpent'])
+				elif time_dict['comment']:
+					message = "Time: {}\nLogged time: {}\nComment: {}".format(time[0], time_dict['timeSpent'], time_dict['comment'])
+				else:
+					message = "Time: {}\nLogged time: {}".format(time[0], time_dict['timeSpent'])
+				tickets.append({"title": "[{}] {}".format(time_dict['key'], time_dict['summary']) , "value": message, "short": False})
+				total_time += time_dict['timeSpentSeconds']
 		tickets.append({"title": "Total time: {}".format(str(datetime.timedelta(seconds=total_time))), "short": False})
 	if total_time >= 25200: # 7h
 		report["color"] = "good"

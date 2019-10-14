@@ -19,26 +19,30 @@ def getTicketWorklog(ticket):
 
 # return daily worklog using jql, date and person name.
 def getDayWorkLog(jql, friday_or_yesterday_date, sunday_or_yesterday_date, person):
-	# create connection to rest api
 	jira = createJiraClient()
-	# get all tickets from jql
 	issues_list = jira.search_issues(jql)
 	day_worklog = {}
 	for issue in issues_list:
-		# get full worklog to ticket
 		worklogs = getTicketWorklog(issue.key)
 		for worklog in worklogs:
 			worklog_date = (datetime.datetime.strptime(worklog['started'][:19], '%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours=10)).strftime("%Y/%m/%d")
 			if worklog_date >= friday_or_yesterday_date and worklog_date <= sunday_or_yesterday_date and worklog['author']['displayName'] == person:
 				worklog_time = (datetime.datetime.strptime(worklog['started'][:19], '%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours=10)).strftime("%H:%M:%S")
+				
 				comment = ''
 				if 'comment' in worklog.keys():
 					comment = worklog['comment']
+
 				parent_key, parent_summary = ('', '')
 				if hasattr(issue.fields, 'parent'):
 					parent_key = issue.fields.parent.key
 					parent_summary = issue.fields.parent.fields.summary
-				day_worklog[worklog_time] = {'key': issue.key, 'summary': issue.fields.summary, 'parent_key': parent_key, 'parent_summary': parent_summary, 'comment': comment, 'timeSpent': worklog['timeSpent'], 'timeSpentSeconds': worklog['timeSpentSeconds']}
+
+				worklog_dict = {'key': issue.key, 'summary': issue.fields.summary, 'parent_key': parent_key, 'parent_summary': parent_summary, 'comment': comment, 'timeSpent': worklog['timeSpent'], 'timeSpentSeconds': worklog['timeSpentSeconds']}
+				if worklog_time in day_worklog.keys():
+					day_worklog[worklog_time].append(worklog_dict)
+				else:
+					day_worklog[worklog_time] = [worklog_dict]
 	return day_worklog
 
 
