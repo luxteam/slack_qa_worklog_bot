@@ -18,7 +18,7 @@ def getTicketWorklog(ticket):
 
 
 # return daily worklog using jql, date and person name.
-def getDayWorkLog(jql, date, person):
+def getDayWorkLog(jql, friday_or_yesterday_date, sunday_or_yesterday_date, person):
 	# create connection to rest api
 	jira = createJiraClient()
 	# get all tickets from jql
@@ -29,7 +29,7 @@ def getDayWorkLog(jql, date, person):
 		worklogs = getTicketWorklog(issue.key)
 		for worklog in worklogs:
 			worklog_date = (datetime.datetime.strptime(worklog['started'][:19], '%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours=10)).strftime("%Y/%m/%d")
-			if worklog_date >= date and worklog['author']['displayName'] == person:
+			if worklog_date >= friday_or_yesterday_date and worklog_date <= sunday_or_yesterday_date and worklog['author']['displayName'] == person:
 				worklog_time = (datetime.datetime.strptime(worklog['started'][:19], '%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours=10)).strftime("%H:%M:%S")
 				comment = ''
 				if 'comment' in worklog.keys():

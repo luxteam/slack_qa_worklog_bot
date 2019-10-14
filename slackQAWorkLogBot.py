@@ -25,6 +25,8 @@ def createReport():
 			jql = "worklogDate >= \'{}\' and worklogDate <= \'{}\' and worklogAuthor = \'{}\'".format(two_days_ago, today, person)
 			# get workdate (yesterday)
 			work_date = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y/%m/%d")
+			# get jira worklog for current person
+			jira_report[person] = jiraHandler.getDayWorkLog(jql, work_date, work_date, person)
 		else: # monday, we take holidays to log
 			# get 4 days ago date, not 3 day ago, because timezone of jira server is -7 from UTC and we add holidays to log, so we get more large border (+4 day)
 			four_days_ago = (datetime.datetime.today() - datetime.timedelta(days=4)).strftime("%Y/%m/%d")
@@ -32,11 +34,11 @@ def createReport():
 			today = datetime.datetime.today().strftime("%Y/%m/%d")
 			# make jql for jira filter
 			jql = "worklogDate >= \'{}\' and worklogDate <= \'{}\' and worklogAuthor = \'{}\'".format(four_days_ago, today, person)
-			# get workdate (friday)
+			# get workdate (friday) and yesterday (sunday)
 			work_date = (datetime.datetime.today() - datetime.timedelta(days=3)).strftime("%Y/%m/%d")
-		
-		# get jira worklog for current person
-		jira_report[person] = jiraHandler.getDayWorkLog(jql, work_date, person)
+			yesterday = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y/%m/%d")
+			# get jira worklog for current person
+			jira_report[person] = jiraHandler.getDayWorkLog(jql, work_date, yesterday, person)
 
 	slack_report = []
 
@@ -87,6 +89,7 @@ def createPersonJson(person, data):
 
 def monitoring():
 
+	send(payload=createReport())
 	while True:
 		try:
 			weekday = datetime.datetime.today().weekday()
