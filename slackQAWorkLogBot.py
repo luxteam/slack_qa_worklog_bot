@@ -44,9 +44,7 @@ def createReport():
 
 	# generate slack report message
 	for person in persons:
-		print(jira_report[person])
 		jira_report[person] = sorted(jira_report[person].items(), key=operator.itemgetter(0))
-		print(jira_report[person])
 		slack_report.append(createPersonJson(person, jira_report[person]))
 
 	# create slack message
@@ -92,7 +90,6 @@ def createPersonJson(person, person_report):
 
 def monitoring():
 
-	send(payload=createReport())
 	while True:
 		try:
 			weekday = datetime.datetime.today().weekday()
