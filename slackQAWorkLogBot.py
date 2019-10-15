@@ -90,6 +90,7 @@ def createPersonJson(person, person_report):
 
 def monitoring():
 
+	print("Starting...")
 	while True:
 		try:
 			weekday = datetime.datetime.today().weekday()

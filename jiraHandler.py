@@ -4,6 +4,7 @@ import requests
 import datetime
 from jira import JIRA
 
+
 # create jira client connection
 def createJiraClient():
 	jira_options = {'server': config.amd_jira_host}
@@ -20,7 +21,7 @@ def getTicketWorklog(ticket):
 # return daily worklog using jql, date and person name.
 def getDayWorkLog(jql, friday_or_yesterday_date, sunday_or_yesterday_date, person):
 	jira = createJiraClient()
-	issues_list = jira.search_issues(jql)
+	issues_list = jira.search_issues(jql, maxResults=100)
 	day_worklog = {}
 	for issue in issues_list:
 		worklogs = getTicketWorklog(issue.key)
