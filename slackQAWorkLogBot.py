@@ -90,13 +90,17 @@ def createPersonJson(person, person_report):
 
 def monitoring():
 
-	print("Starting...")
+	report = {}
+	report["attachments"] = [{'text': "QA Worklog bot was started!"}]
+	send(config.webhook_test, payload=report)
+	send(config.webhook_test, payload=createReport())
+
 	while True:
 		try:
 			weekday = datetime.datetime.today().weekday()
 			now = datetime.datetime.now()
 			if weekday in range(0, 4) and now.hour == 9 and now.minute == 30:
-				send(payload=createReport())
+				send(config.webhook_url, payload=createReport())
 				time.sleep(60)
 			
 			time.sleep(30)
