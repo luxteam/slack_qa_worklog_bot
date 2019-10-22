@@ -8,11 +8,10 @@ import config
 import jiraHandler
 
 
-def createReport():
+def createReport(persons):
 
 	jira_report = {}
 
-	persons = config.persons
 	for person in persons:
 		# get day of week, 0 - monday.
 		weekday = datetime.datetime.today().weekday()
@@ -91,16 +90,16 @@ def createPersonJson(person, person_report):
 def monitoring():
 
 	report = {}
-	report["attachments"] = [{'text': "QA Worklog bot was started!"}]
+	report["attachments"] = [{'text': "Worklog bot was started!"}]
 	send(config.webhook_test, payload=report)
-	send(config.webhook_test, payload=createReport())
 
 	while True:
 		try:
 			weekday = datetime.datetime.today().weekday()
 			now = datetime.datetime.now()
-			if weekday in range(0, 4) and now.hour == 9 and now.minute == 30:
-				send(config.webhook_url, payload=createReport())
+			if weekday in range(0, 4) and now.hour == 6 and now.minute == 30:
+				send(config.webhook_qa, payload=createReport(config.qa))
+				send(config.webhook_dev, payload=createReport(config.dev))
 				time.sleep(60)
 			
 			time.sleep(30)
