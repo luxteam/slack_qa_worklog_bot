@@ -2,10 +2,15 @@ import os
 import time
 import datetime
 import operator
+import logging
 
 from webhookHandler import send
 import config
 import jiraHandler
+
+
+logging.basicConfig(filename="slackbot.log", level=logging.INFO, format='%(asctime)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+logger = logging.getLogger(__name__)
 
 
 def createReport(persons):
@@ -13,40 +18,28 @@ def createReport(persons):
 	jira_report = {}
 
 	for person in persons:
-		# get day of week, 0 - monday.
 		weekday = datetime.datetime.today().weekday()
 		if weekday: # not monday
-			# get 2 days ago date, not 1 day ago, because timezone of jira server is -7 from UTC, so we get more large border (+1 day)
 			two_days_ago = (datetime.datetime.today() - datetime.timedelta(days=2)).strftime("%Y/%m/%d")
-			# get current date, not yesterday, because we take more large border
 			today = datetime.datetime.today().strftime("%Y/%m/%d")
-			# make jql for jira filter
 			jql = "worklogDate >= \'{}\' and worklogDate <= \'{}\' and worklogAuthor = \'{}\'".format(two_days_ago, today, person)
-			# get workdate (yesterday)
 			work_date = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y/%m/%d")
-			# get jira worklog for current person
 			jira_report[person] = jiraHandler.getDayWorkLog(jql, work_date, work_date, person)
 		else: # monday, we take holidays to log
-			# get 4 days ago date, not 3 day ago, because timezone of jira server is -7 from UTC and we add holidays to log, so we get more large border (+4 day)
 			four_days_ago = (datetime.datetime.today() - datetime.timedelta(days=4)).strftime("%Y/%m/%d")
-			# get current date, not yesterday, because we take more large border
 			today = datetime.datetime.today().strftime("%Y/%m/%d")
-			# make jql for jira filter
 			jql = "worklogDate >= \'{}\' and worklogDate <= \'{}\' and worklogAuthor = \'{}\'".format(four_days_ago, today, person)
-			# get workdate (friday) and yesterday (sunday)
 			work_date = (datetime.datetime.today() - datetime.timedelta(days=3)).strftime("%Y/%m/%d")
 			yesterday = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y/%m/%d")
-			# get jira worklog for current person
 			jira_report[person] = jiraHandler.getDayWorkLog(jql, work_date, yesterday, person)
+
 
 	slack_report = []
 
-	# generate slack report message
 	for person in persons:
 		jira_report[person] = sorted(jira_report[person].items(), key=operator.itemgetter(0))
 		slack_report.append(createPersonJson(person, jira_report[person]))
 
-	# create slack message
 	report = {}
 	slack_report[0]['pretext'] = "*Work date: {}*".format(work_date)
 	report["attachments"] = slack_report
@@ -89,8 +82,9 @@ def createPersonJson(person, person_report):
 
 def monitoring():
 
+	logger.info("Bot started")
 	report = {}
-	report["attachments"] = [{'text': "Worklog bot was started!"}]
+	report["attachments"] = [{'text': "QA/Dev Worklog bot was started!"}]
 	send(config.webhook_test, payload=report)
 
 	while True:
@@ -98,13 +92,22 @@ def monitoring():
 			weekday = datetime.datetime.today().weekday()
 			now = datetime.datetime.now()
 			if weekday in range(0, 4) and now.hour == 6 and now.minute == 30:
-				send(config.webhook_qa, payload=createReport(config.qa))
-				send(config.webhook_dev, payload=createReport(config.dev))
+				logger.info("Sending message")
+				qa_response = send(config.webhook_qa, payload=createReport(config.qa))
+				dev_response = send(config.webhook_dev, payload=createReport(config.dev))
+				logger.info("Response: {} & {}".format(qa_response, dev_response))
+				time.sleep(60)
+			if now.hour in (8, 10, 12, 14, 16, 18, 20, 22) and now.minute == 0:
+				report = {}
+				report["attachments"] = [{'text': "QA/Dev Worklog bot is working!"}]
+				logger.info("Sending status")
+				response = send(config.webhook_test, payload=report)
+				logger.info("Response: {}".format(response))
 				time.sleep(60)
 			
 			time.sleep(30)
 		except Exception as ex:
-			print(ex)
+			logger.info("Exception: {}".format(ex))
 
 if __name__ == "__main__":
 	monitoring()
