@@ -85,9 +85,9 @@ def monitoring():
 
 	sendDirectMessage("QA Worklog bot was started!")	
 
-	qa_response = send(config.webhook_qa, payload=createReport(config.qa))
-	dev_response = send(config.webhook_dev, payload=createReport(config.dev))
-	sendDirectMessage("QA/Dev response: {}/{}".format(qa_response, dev_response))	
+	#qa_response = send(config.webhook_qa, payload=createReport(config.qa))
+	#dev_response = send(config.webhook_dev, payload=createReport(config.dev))
+	#sendDirectMessage("QA/Dev response: {}/{}".format(qa_response, dev_response))	
 
 	while True:
 		try:
