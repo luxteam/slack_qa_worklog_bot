@@ -2,15 +2,10 @@ import os
 import time
 import datetime
 import operator
-import logging
 
 from webhookHandler import send
 import config
 import jiraHandler
-
-
-logging.basicConfig(filename="slackbot.log", level=logging.INFO, format='%(asctime)s : %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-logger = logging.getLogger(__name__)
 
 
 def createReport(persons):
@@ -80,34 +75,45 @@ def createPersonJson(person, person_report):
 	return report
 
 
+def sendDirectMessage(text):
+	report = {}
+	report["attachments"] = [{'text': text}]
+	send(config.webhook_test, payload=report)
+
+
 def monitoring():
 
-	logger.info("Bot started")
-	report = {}
-	report["attachments"] = [{'text': "QA/Dev Worklog bot was started!"}]
-	send(config.webhook_test, payload=report)
+	sendDirectMessage("QA Worklog bot was started!")	
+
+	qa_response = send(config.webhook_qa, payload=createReport(config.qa))
+	dev_response = send(config.webhook_dev, payload=createReport(config.dev))
+	sendDirectMessage("QA/Dev response: {}/{}".format(qa_response, dev_response))	
 
 	while True:
 		try:
 			weekday = datetime.datetime.today().weekday()
 			now = datetime.datetime.now()
 			if weekday in range(0, 4) and now.hour == 6 and now.minute == 30:
-				logger.info("Sending message")
+
 				qa_response = send(config.webhook_qa, payload=createReport(config.qa))
 				dev_response = send(config.webhook_dev, payload=createReport(config.dev))
-				logger.info("Response: {} & {}".format(qa_response, dev_response))
-				time.sleep(60)
-			if now.hour in (8, 10, 12, 14, 16, 18, 20, 22) and now.minute == 0:
-				report = {}
-				report["attachments"] = [{'text': "QA/Dev Worklog bot is working!"}]
-				logger.info("Sending status")
-				response = send(config.webhook_test, payload=report)
-				logger.info("Response: {}".format(response))
+				sendDirectMessage("QA/Dev response: {}/{}".format(qa_response, dev_response))
+
+				while qa_response != 'ok':
+					time.sleep(15)
+					qa_response = send(config.webhook_qa, payload=createReport(config.qa))
+					sendDirectMessage("QA response: {}".format(qa_response))
+
+				while dev_response != 'ok':
+					time.sleep(15)
+					dev_response = send(config.webhook_dev, payload=createReport(config.dev))
+					sendDirectMessage("Dev response: {}".format(dev_response))
+
 				time.sleep(60)
 			
 			time.sleep(30)
 		except Exception as ex:
-			logger.info("Exception: {}".format(ex))
+			sendDirectMessage(ex)
 
 if __name__ == "__main__":
 	monitoring()
