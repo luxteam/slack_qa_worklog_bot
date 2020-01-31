@@ -93,7 +93,7 @@ def monitoring():
 		try:
 			weekday = datetime.datetime.today().weekday()
 			now = datetime.datetime.now()
-			if weekday in range(0, 4) and now.hour == 6 and now.minute == 30:
+			if weekday in range(0, 5) and now.hour == 6 and now.minute == 30:
 
 				qa_response = send(config.webhook_qa, payload=createReport(config.qa))
 				dev_response = send(config.webhook_dev, payload=createReport(config.dev))
