@@ -33,7 +33,7 @@ def createReport(persons):
 
 	for person in persons:
 		jira_report[person] = sorted(jira_report[person].items(), key=operator.itemgetter(0))
-		slack_report.append(createPersonJson(person, jira_report[person]))
+		slack_report.append(createPersonJson(persons[person], person, jira_report[person]))
 
 	report = {}
 	slack_report[0]['pretext'] = "*Work date: {}*".format(work_date)
@@ -42,9 +42,10 @@ def createReport(persons):
 	return report
 
 
-def createPersonJson(person, person_report):
+def createPersonJson(name, username, person_report):
 	report = {}
-	report["title"] = person
+	report["title"] = name
+
 	tickets = []
 	total_time = 0
 	if person_report:
@@ -61,6 +62,7 @@ def createPersonJson(person, person_report):
 				tickets.append({"title": "[{}] {}".format(time_dict['key'], time_dict['summary']) , "value": message, "short": False})
 				total_time += time_dict['timeSpentSeconds']
 		tickets.append({"title": "Total time: {}".format(str(datetime.timedelta(seconds=total_time))), "short": False})
+
 	if total_time >= 25200: # 7h
 		report["color"] = "good"
 	elif total_time:
@@ -68,6 +70,7 @@ def createPersonJson(person, person_report):
 	else:
 		report["color"] = "danger"
 		tickets.append({"title": "No logged time", "short": False})
+
 	report["fields"] = tickets
 	report["footer"] = "Jira API"
 	report["footer_icon"] = "https://platform.slack-edge.com/img/default_application_icon.png"
@@ -85,8 +88,8 @@ def monitoring():
 
 	sendDirectMessage("QA Worklog bot was started!")	
 
-	#qa_response = send(config.webhook_qa, payload=createReport(config.qa))
-	#dev_response = send(config.webhook_dev, payload=createReport(config.dev))
+	#qa_response = send(config.webhook_test, payload=createReport(config.qa))
+	#dev_response = send(config.webhook_test, payload=createReport(config.dev))
 	#sendDirectMessage("QA/Dev response: {}/{}".format(qa_response, dev_response))	
 
 	while True:
