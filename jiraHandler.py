@@ -52,7 +52,7 @@ def getDayWorkLog(jql, friday_or_yesterday_date, sunday_or_yesterday_date, perso
 		worklogs = getTicketWorklog(issue)
 		for worklog in worklogs:
 			worklog_date = (datetime.datetime.strptime(worklog['started'][:19], '%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours=11)).strftime("%Y/%m/%d")
-			if worklog_date >= friday_or_yesterday_date and worklog_date <= sunday_or_yesterday_date and worklog['author']['key'] == person:
+			if worklog_date >= friday_or_yesterday_date and worklog_date <= sunday_or_yesterday_date and (worklog['author']['key'] == person or worklog['author']['displayName'] == person):
 				worklog_time = (datetime.datetime.strptime(worklog['started'][:19], '%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours=11)).strftime("%H:%M:%S")
 				
 				comment = ''
