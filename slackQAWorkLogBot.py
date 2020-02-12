@@ -12,28 +12,28 @@ def createReport(persons):
 
 	jira_report = {}
 
-	for person in persons:
+	for person_id in persons:
 		weekday = datetime.datetime.today().weekday()
 		if weekday: # not monday
 			two_days_ago = (datetime.datetime.today() - datetime.timedelta(days=2)).strftime("%Y/%m/%d")
 			today = datetime.datetime.today().strftime("%Y/%m/%d")
-			jql = "worklogDate >= \'{}\' and worklogDate <= \'{}\' and worklogAuthor = \'{}\'".format(two_days_ago, today, person)
+			jql = "worklogDate >= \'{}\' and worklogDate <= \'{}\' and worklogAuthor = \'{}\'".format(two_days_ago, today, person_id)
 			work_date = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y/%m/%d")
-			jira_report[person] = jiraHandler.getDayWorkLog(jql, work_date, work_date, person)
+			jira_report[person_id] = jiraHandler.getDayWorkLog(jql, work_date, work_date, person_id, persons)
 		else: # monday, we take holidays to log
 			four_days_ago = (datetime.datetime.today() - datetime.timedelta(days=4)).strftime("%Y/%m/%d")
 			today = datetime.datetime.today().strftime("%Y/%m/%d")
-			jql = "worklogDate >= \'{}\' and worklogDate <= \'{}\' and worklogAuthor = \'{}\'".format(four_days_ago, today, person)
+			jql = "worklogDate >= \'{}\' and worklogDate <= \'{}\' and worklogAuthor = \'{}\'".format(four_days_ago, today, person_id)
 			work_date = (datetime.datetime.today() - datetime.timedelta(days=3)).strftime("%Y/%m/%d")
 			yesterday = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y/%m/%d")
-			jira_report[person] = jiraHandler.getDayWorkLog(jql, work_date, yesterday, person)
+			jira_report[person_id] = jiraHandler.getDayWorkLog(jql, work_date, yesterday, person_id, persons)
 
 
 	slack_report = []
 
-	for person in persons:
-		jira_report[person] = sorted(jira_report[person].items(), key=operator.itemgetter(0))
-		slack_report.append(createPersonJson(persons[person], person, jira_report[person]))
+	for person_id in persons:
+		jira_report[person_id] = sorted(jira_report[person_id].items(), key=operator.itemgetter(0))
+		slack_report.append(createPersonJson(persons[person_id], person_id, jira_report[person_id]))
 
 	report = {}
 	slack_report[0]['pretext'] = "*Work date: {}*".format(work_date)
@@ -89,7 +89,7 @@ def monitoring():
 	sendDirectMessage("QA Worklog bot was started!")	
 
 	qa_response = send(config.webhook_test, payload=createReport(config.qa))
-	#dev_response = send(config.webhook_dev, payload=createReport(config.dev))
+	dev_response = send(config.webhook_test, payload=createReport(config.dev))
 	#sendDirectMessage("QA/Dev response: {}/{}".format(qa_response, dev_response))	
 
 	while True:
